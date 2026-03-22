@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
-RUN npm install -r requirements.txt
-COPY fetcher.py .
-CMD ["python","fetcher.py"]
+RUN pip install -r requirements.txt
+COPY fetch.py .
+CMD ["python","fetch.py"]
 
