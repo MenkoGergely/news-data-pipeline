@@ -22,5 +22,12 @@ services:
       NEWS_API_KEY: ${NEWS_API_KEY}
     depends_on:
         - postgresdb 
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - postgresdb
+    ports:
+      - 8080:8080
 volumes:
     postgres_data:

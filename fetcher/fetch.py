@@ -1,6 +1,6 @@
 import requests
 import psycopg2
-from datetime import datetime
+from datetime import datetime, time
 from dotenv import load_dotenv
 import os
 
@@ -24,34 +24,40 @@ cur=None
 max_retries=5
 try:
     for attempt in range(max_retries):
-      conn = psycopg2.connect(host=os.getenv('DB_HOST'),dbname=os.getenv('DB_NAME'),user=os.getenv('DB_USER'),password=os.getenv('DB_PASSWORD'),port=os.getenv('DB_PORT'))
-      break
-    cur = conn.cursor()
+      try:  
+        conn = psycopg2.connect(host=os.getenv('DB_HOST'),dbname=os.getenv('DB_NAME'),user=os.getenv('DB_USER'),password=os.getenv('DB_PASSWORD'),port=os.getenv('DB_PORT'))
+        cur = conn.cursor()
+        break
+      except Exception as error:
+         print(f"Attempt failed {e}")
+         time.sleep(3)
+         
+      create_script ='''CREATE TABLE IF NOT EXISTS headlines(
+          id  serial PRIMARY KEY,
+          title varchar,
+          source varchar,
+          author varchar,
+          url varchar,
+          published_at varchar,
+          fetched_at timestamp
+        )'''
 
-    create_script ='''CREATE TABLE IF NOT EXISTS headlines(
-      id  serial PRIMARY KEY,
-      title varchar,
-      source varchar,
-      author varchar,
-      url varchar,
-      published_at varchar,
-      fetched_at timestamp
-    )'''
+      cur.execute(create_script)
+      conn.commit()
 
-    cur.execute(create_script)
-    conn.commit()
-
-    news_json=get_news_info(url)
+      news_json=get_news_info(url)
 
 
 
-    for data in news_json["articles"]:
-      insert_script ="INSERT INTO headlines (title,source,author,url,published_at,fetched_at) VALUES (%s,%s,%s,%s,%s,%s)"
+      for data in news_json["articles"]:
+          insert_script ="INSERT INTO headlines (title,source,author,url,published_at,fetched_at) VALUES (%s,%s,%s,%s,%s,%s)"
 
-      insert_value = (data["title"],data["source"]["name"],data["author"],data["url"],data["publishedAt"],datetime.now())
-      cur.execute(insert_script,insert_value)
-    conn.commit()
-    print("All articles inserted!")
+          insert_value = (data["title"],data["source"]["name"],data["author"],data["url"],data["publishedAt"],datetime.now())
+          cur.execute(insert_script,insert_value)
+      conn.commit()
+      print("All articles inserted!")
+       
+    
 except Exception as error:
     print(error)
 finally:
